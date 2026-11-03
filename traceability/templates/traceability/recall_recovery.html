@@ -1,0 +1,332 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TraceRecall - Recovery Tracking</title>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            background: #f3f6fb;
+            color: #1e293b;
+        }
+
+        header {
+            background: #172554;
+            color: white;
+            padding: 22px 6%;
+        }
+
+        header h1 {
+            font-size: 25px;
+        }
+
+        header p {
+            margin-top: 7px;
+            color: #cbd5e1;
+        }
+
+        header a {
+            color: #bfdbfe;
+            text-decoration: none;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 35px auto;
+            padding: 0 20px;
+        }
+
+        .card {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            margin-bottom: 22px;
+            box-shadow: 0 3px 12px #0000000d;
+            overflow-wrap: anywhere;
+        }
+
+        h2 {
+            color: #172554;
+            margin-bottom: 18px;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 15px;
+        }
+
+        .info {
+            background: #f8fafc;
+            padding: 16px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+        }
+
+        .info strong {
+            display: block;
+            color: #64748b;
+            margin-bottom: 8px;
+            font-size: 13px;
+        }
+
+        .info span {
+            font-weight: bold;
+        }
+
+        .status {
+            display: inline-block;
+            padding: 6px 12px;
+            border-radius: 20px;
+            background: #dbeafe;
+            color: #1d4ed8;
+            font-weight: bold;
+        }
+
+        .progress {
+            background: #e2e8f0;
+            height: 12px;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+
+        .progress-bar {
+            background: #16a34a;
+            height: 100%;
+        }
+
+        .muted {
+            color: #64748b;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 0 12px;
+            }
+        }
+        .filter-section {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-top: 20px;
+}
+
+.filter-section input,
+.filter-section select {
+    padding: 12px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    font-size: 14px;
+}
+
+.filter-section input {
+    flex: 1;
+    min-width: 220px;
+}
+
+.filter-section select {
+    min-width: 160px;
+}
+
+.no-results {
+    display: none;
+    color: #dc2626;
+    margin-top: 15px;
+}
+    </style>
+</head>
+
+<body>
+
+<header>
+    <h1>TraceRecall</h1>
+    <p>Recall Recovery Tracking</p>
+    <p><a href="/">← Back to Dashboard</a></p>
+</header>
+
+<div class="container">
+
+    <div class="card">
+        <h2>Recall Recovery Dashboard</h2>
+        <p class="muted">
+            Monitor recall cases, recovered quantities,
+            pending quantities and recovery progress.
+        </p>
+        <div class="filter-section">
+
+    <input
+        type="text"
+        id="recallSearch"
+        placeholder="Search Recall ID or Material Lot ID..."
+        onkeyup="filterRecalls()"
+    >
+
+    <select id="statusFilter" onchange="filterRecalls()">
+        <option value="ALL">All Statuses</option>
+        <option value="OPEN">OPEN</option>
+        <option value="IN_PROGRESS">IN PROGRESS</option>
+        <option value="COMPLETED">COMPLETED</option>
+    </select>
+
+</div>
+
+<p id="noResults" class="no-results">
+    No matching recall cases found.
+</p>
+    </div>
+
+    {% for recall in recalls %}
+
+    <div class="card recall-card"
+     data-recall="{{ recall.recall_case_id|lower }}"
+     data-lot="{{ recall.trigger_lot_id|lower }}"
+     data-status="{{ recall.status }}">
+
+        <h2>
+    <a href="{% url 'recall_details' recall.recall_case_id %}">
+        {{ recall.recall_case_id }}
+    </a>
+</h2>
+
+        <div class="grid">
+
+            <div class="info">
+                <strong>Trigger Lot ID</strong>
+                <span>{{ recall.trigger_lot_id }}</span>
+            </div>
+
+            <div class="info">
+                <strong>Reason</strong>
+                <span>{{ recall.reason }}</span>
+            </div>
+
+            <div class="info">
+                <strong>Severity</strong>
+                <span>{{ recall.severity }}</span>
+            </div>
+
+            <div class="info">
+                <strong>Status</strong>
+                <span class="status">{{ recall.status }}</span>
+            </div>
+
+            <div class="info">
+                <strong>Total Affected Quantity</strong>
+                <span>{{ recall.scope_quantity }}</span>
+            </div>
+
+            <div class="info">
+                <strong>Recovered Quantity</strong>
+                <span>{{ recall.recovered_quantity }}</span>
+            </div>
+
+            <div class="info">
+                <strong>Pending Quantity</strong>
+                <span>{{ recall.pending_quantity }}</span>
+            </div>
+
+            <div class="info">
+                <strong>Recovery Percentage</strong>
+                <span>{{ recall.completion_percentage }}%</span>
+
+                <div class="progress">
+                    <div class="progress-bar"
+                         style="width: {{ recall.completion_percentage }}%;">
+                    </div>
+                </div>
+            </div>
+
+        </div>
+        <h3>Update Recovered Quantity</h3>
+
+{% if error %}
+    <p style="color: red;">{{ error }}</p>
+{% endif %}
+
+<form method="POST">
+    {% csrf_token %}
+
+    <input
+        type="hidden"
+        name="recall_id"
+        value="{{ recall.recall_case_id }}"
+    >
+
+    <input
+        type="number"
+        name="recovered_quantity"
+        min="0"
+        max="{{ recall.scope_quantity }}"
+        value="{{ recall.recovered_quantity }}"
+        placeholder="Enter recovered quantity"
+        required
+    >
+
+    <button type="submit">Update Recovery</button>
+</form>
+
+    </div>
+
+    {% empty %}
+
+    <div class="card">
+        <p class="muted">No recall cases found.</p>
+    </div>
+
+    {% endfor %}
+
+</div>
+<script>
+function filterRecalls() {
+
+    const searchValue = document
+        .getElementById("recallSearch")
+        .value.toLowerCase();
+
+    const selectedStatus = document
+        .getElementById("statusFilter")
+        .value;
+
+    const cards = document.querySelectorAll(".recall-card");
+
+    let visibleCount = 0;
+
+    cards.forEach(function(card) {
+
+        const recallId = card.dataset.recall;
+        const lotId = card.dataset.lot;
+        const status = card.dataset.status;
+
+        const matchesSearch =
+            recallId.includes(searchValue) ||
+            lotId.includes(searchValue);
+
+        const matchesStatus =
+            selectedStatus === "ALL" ||
+            status === selectedStatus;
+
+        if (matchesSearch && matchesStatus) {
+            card.style.display = "block";
+            visibleCount++;
+        } else {
+            card.style.display = "none";
+        }
+
+    });
+
+    document.getElementById("noResults").style.display =
+        visibleCount === 0 ? "block" : "none";
+}
+</script>
+</body>
+</html>

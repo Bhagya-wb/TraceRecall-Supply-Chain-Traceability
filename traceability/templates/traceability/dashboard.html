@@ -1,0 +1,521 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TraceRecall - Analytics Dashboard</title>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            background: #f1f5f9;
+            color: #1e293b;
+        }
+
+        header {
+            background: #172554;
+            color: white;
+            padding: 25px 6%;
+        }
+
+        header h1 {
+            font-size: 28px;
+        }
+
+        header p {
+            color: #cbd5e1;
+            margin-top: 8px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 35px auto;
+            padding: 0 20px;
+        }
+
+        .section-title {
+            margin: 28px 0 16px;
+            color: #172554;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+            gap: 18px;
+        }
+
+        .card {
+            background: white;
+            padding: 22px;
+            border-radius: 12px;
+            box-shadow: 0 3px 12px #0000000d;
+            min-width: 0;
+        }
+
+        .card h3 {
+            font-size: 14px;
+            color: #64748b;
+            margin-bottom: 14px;
+        }
+
+        .number {
+            font-size: 30px;
+            font-weight: bold;
+            color: #172554;
+        }
+
+        .green { color: #15803d; }
+        .orange { color: #c2410c; }
+        .red { color: #dc2626; }
+
+        .progress {
+            height: 12px;
+            background: #e2e8f0;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-top: 15px;
+        }
+
+        .progress-bar {
+            height: 100%;
+            background: #16a34a;
+        }
+
+        .links {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+
+        .links a {
+            display: block;
+            padding: 17px;
+            background: #1e40af;
+            color: white;
+            text-decoration: none;
+            text-align: center;
+            border-radius: 8px;
+            font-weight: bold;
+        }
+
+        .links a:hover {
+            background: #172554;
+        }
+
+        .chart-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+        }
+
+        .chart-card {
+            background: white;
+            padding: 22px;
+            border-radius: 12px;
+            box-shadow: 0 3px 12px #0000000d;
+            min-width: 0;
+        }
+
+        .chart-card h3 {
+            color: #172554;
+            margin-bottom: 20px;
+        }
+
+        .chart-container {
+            position: relative;
+            height: 280px;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        th, td {
+            text-align: left;
+            padding: 13px;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        th {
+            background: #f8fafc;
+            color: #475569;
+        }
+
+        .table-container {
+            overflow-x: auto;
+        }
+
+        .status {
+            font-weight: bold;
+        }
+
+        @media (max-width: 600px) {
+            header h1 {
+                font-size: 23px;
+            }
+
+            .container {
+                padding: 0 12px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<header>
+    <h1>TraceRecall</h1>
+    <p>Supply Chain Traceability & Product Recall Management System</p>
+</header>
+
+<div class="container">
+
+    <!-- Supply Chain Statistics -->
+    <h2 class="section-title">Supply Chain Overview</h2>
+
+    <div class="grid">
+
+        <div class="card">
+            <h3>Total Suppliers</h3>
+            <div class="number">{{ total_suppliers }}</div>
+        </div>
+
+        <div class="card">
+            <h3>Material Lots</h3>
+            <div class="number">{{ total_material_lots }}</div>
+        </div>
+
+        <div class="card">
+            <h3>Production Orders</h3>
+            <div class="number">{{ total_production_orders }}</div>
+        </div>
+
+        <div class="card">
+            <h3>Finished Lots</h3>
+            <div class="number">{{ total_finished_lots }}</div>
+        </div>
+
+        <div class="card">
+            <h3>Shipments</h3>
+            <div class="number">{{ total_shipments }}</div>
+        </div>
+
+        <div class="card">
+            <h3>Deliveries</h3>
+            <div class="number">{{ total_deliveries }}</div>
+        </div>
+
+    </div>
+
+    <!-- Recall Statistics -->
+    <h2 class="section-title">Recall Management Overview</h2>
+
+    <div class="grid">
+
+        <div class="card">
+            <h3>Total Recall Cases</h3>
+            <div class="number">{{ total_recalls }}</div>
+        </div>
+
+        <div class="card">
+            <h3>Open Recalls</h3>
+            <div class="number red">{{ open_recalls }}</div>
+        </div>
+
+        <div class="card">
+            <h3>In Progress Recalls</h3>
+            <div class="number orange">{{ in_progress_recalls }}</div>
+        </div>
+
+        <div class="card">
+            <h3>Completed Recalls</h3>
+            <div class="number green">{{ completed_recalls }}</div>
+        </div>
+
+        <div class="card">
+            <h3>Critical Recalls</h3>
+            <div class="number red">{{ critical_recalls }}</div>
+        </div>
+
+        <div class="card">
+            <h3>High Severity Recalls</h3>
+            <div class="number orange">{{ high_recalls }}</div>
+        </div>
+
+    </div>
+
+    <!-- Recovery Statistics -->
+     <h2 class="section-title">Recall Action History Overview</h2>
+
+<div class="grid">
+
+    <div class="card">
+        <h3>Total Recovery Actions</h3>
+        <div class="number">{{ total_recovery_actions }}</div>
+    </div>
+
+    <div class="card">
+        <h3>Completed Recovery Actions</h3>
+        <div class="number green">{{ completed_recovery_actions }}</div>
+    </div>
+
+    <div class="card">
+        <h3>Quantity Recovered (Action History)</h3>
+        <div class="number">{{ total_action_recovered_quantity }}</div>
+    </div>
+
+</div>
+    <h2 class="section-title">Recovery Progress</h2>
+
+    <div class="card">
+
+        <div class="grid">
+
+            <div>
+                <h3>Total Affected Quantity</h3>
+                <div class="number">{{ total_affected_quantity }}</div>
+            </div>
+
+            <div>
+                <h3>Total Recovered Quantity</h3>
+                <div class="number green">{{ total_recovered_quantity }}</div>
+            </div>
+
+            <div>
+                <h3>Total Pending Quantity</h3>
+                <div class="number orange">{{ total_pending_quantity }}</div>
+            </div>
+
+            <div>
+                <h3>Overall Recovery</h3>
+                <div class="number green">
+                    {{ overall_recovery_percentage }}%
+                </div>
+            </div>
+
+        </div>
+
+        <div class="progress">
+            <div class="progress-bar"
+                 style="width: {{ overall_recovery_percentage }}%;">
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Analytics Charts -->
+    <h2 class="section-title">Recall Analytics</h2>
+
+    <div class="chart-grid">
+
+        <div class="chart-card">
+            <h3>Recall Status Distribution</h3>
+            <div class="chart-container">
+                <canvas id="statusChart"></canvas>
+            </div>
+        </div>
+
+        <div class="chart-card">
+            <h3>Recovery Analytics</h3>
+            <div class="chart-container">
+                <canvas id="recoveryChart"></canvas>
+            </div>
+        </div>
+
+        <div class="chart-card">
+            <h3>Recall Severity Analysis</h3>
+            <div class="chart-container">
+                <canvas id="severityChart"></canvas>
+            </div>
+        </div>
+
+    </div>
+
+
+<h2 class="section-title">Quick Navigation</h2>
+
+<div class="links">
+    <a href="/traceability/">Traceability Search</a>
+
+    <a href="/recall-simulation/">Recall Simulation</a>
+
+    <a href="/recall-recovery/">Recall Recovery Tracking</a>
+
+    <a href="{% url 'export_recall_csv' %}">
+        Download Recall Report (CSV)
+    </a>
+
+    <a href="{% url 'exception_report' %}">
+        Exception Report
+    </a>
+
+    <a href="{% url 'customer_notification' %}">
+        Customer Notification Management
+    </a>
+    <a href="{% url 'product_quarantine' %}">
+    Product Quarantine Management
+</a>
+</div>
+
+
+    <!-- Recent Recalls -->
+    <h2 class="section-title">Recent Recall Cases</h2>
+
+    <div class="card table-container">
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Recall ID</th>
+                    <th>Trigger Lot</th>
+                    <th>Severity</th>
+                    <th>Status</th>
+                    <th>Recovery</th>
+                </tr>
+            </thead>
+
+            <tbody>
+
+                {% for recall in recent_recalls %}
+                <tr>
+                    <td>
+                        <a href="{% url 'recall_details' recall.recall_case_id %}">
+                            {{ recall.recall_case_id }}
+                        </a>
+                    </td>
+                    <td>{{ recall.trigger_lot_id }}</td>
+                    <td>{{ recall.severity }}</td>
+                    <td class="status">{{ recall.status }}</td>
+                    <td>{{ recall.completion_percentage }}%</td>
+                </tr>
+
+                {% empty %}
+                <tr>
+                    <td colspan="5">No recall cases available.</td>
+                </tr>
+                {% endfor %}
+
+            </tbody>
+        </table>
+
+    </div>
+
+</div>
+
+<!-- Django data passed safely to JavaScript -->
+{{ recall_status_data|json_script:"recall-status-data" }}
+{{ recovery_data|json_script:"recovery-data" }}
+
+<script>
+
+    // Read recall status data from Django
+    const statusData = JSON.parse(
+        document.getElementById("recall-status-data").textContent
+    );
+
+    // Read recovery data from Django
+    const recoveryData = JSON.parse(
+        document.getElementById("recovery-data").textContent
+    );
+
+    // Recall Status Doughnut Chart
+    new Chart(document.getElementById("statusChart"), {
+        type: "doughnut",
+        data: {
+            labels: statusData.map(item => item.label),
+            datasets: [{
+                data: statusData.map(item => item.count),
+                backgroundColor: [
+                    "#ef4444",
+                    "#f59e0b",
+                    "#16a34a"
+                ],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: "bottom"
+                }
+            }
+        }
+    });
+
+    // Recovery Bar Chart
+    new Chart(document.getElementById("recoveryChart"), {
+        type: "bar",
+        data: {
+            labels: recoveryData.map(item => item.label),
+            datasets: [{
+                label: "Quantity",
+                data: recoveryData.map(item => item.quantity),
+                backgroundColor: [
+                    "#16a34a",
+                    "#f59e0b"
+                ],
+                borderRadius: 6
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            scales: {
+                y: {
+                    beginAtZero: true
+                }
+            },
+            plugins: {
+                legend: {
+                    display: false
+                }
+            }
+        }
+    });
+
+    // Recall Severity Doughnut Chart
+    new Chart(document.getElementById("severityChart"), {
+        type: "doughnut",
+        data: {
+            labels: ["CRITICAL", "HIGH"],
+            datasets: [{
+                data: [
+                    {{ critical_recalls }},
+                    {{ high_recalls }}
+                ],
+                backgroundColor: [
+                    "#dc2626",
+                    "#f97316"
+                ],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    position: "bottom"
+                }
+            }
+        }
+    });
+
+</script>
+
+</body>
+</html>

@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Product Quarantine Management</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f6f9;
+            padding: 25px;
+        }
+        .container {
+            max-width: 1000px;
+            margin: auto;
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+        }
+        h2 { color: #263b60; }
+        select, button {
+            padding: 10px;
+            margin: 10px 0;
+        }
+        button {
+            background: #c0392b;
+            color: white;
+            border: none;
+            cursor: pointer;
+            border-radius: 5px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        th, td {
+            padding: 12px;
+            border: 1px solid #ddd;
+            text-align: left;
+        }
+        th { background: #263b60; color: white; }
+        .status { font-weight: bold; }
+        a { color: #263b60; }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h2>Product Quarantine Management</h2>
+
+    <form method="GET">
+        <label>Select Recall Case:</label>
+        <select name="recall_id" required>
+            <option value="">-- Select Recall --</option>
+            {% for recall in recalls %}
+            <option value="{{ recall.recall_case_id }}"
+                {% if selected_recall and selected_recall.recall_case_id == recall.recall_case_id %}
+                    selected
+                {% endif %}>
+                {{ recall.recall_case_id }} - {{ recall.reason }}
+            </option>
+            {% endfor %}
+        </select>
+        <button type="submit">View Affected Lots</button>
+    </form>
+
+    {% if selected_recall %}
+        <h3>Recall: {{ selected_recall.recall_case_id }}</h3>
+
+        {% if affected_lots %}
+        <table>
+            <tr>
+                <th>Finished Lot</th>
+                <th>Product ID</th>
+                <th>Available Quantity</th>
+                <th>Status</th>
+            </tr>
+            {% for lot in affected_lots %}
+            <tr>
+                <td>{{ lot.finished_lot_id }}</td>
+                <td>{{ lot.product_id }}</td>
+                <td>{{ lot.quantity_available }}</td>
+                <td class="status">{{ lot.status }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+
+        <form method="POST">
+            {% csrf_token %}
+            <input type="hidden" name="recall_id"
+                   value="{{ selected_recall.recall_case_id }}">
+            <button type="submit">Quarantine Affected Stock</button>
+        </form>
+        {% else %}
+            <p>No affected finished lots were found for this recall.</p>
+        {% endif %}
+    {% endif %}
+
+    <p><a href="/">Back to Dashboard</a></p>
+</div>
+</body>
+</html>

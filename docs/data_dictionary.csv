@@ -1,0 +1,109 @@
+entity,field,type,required,allowed_values_or_format,unique,validation_rule
+Supplier,supplier_id,string,required,SUP-####,unique,Primary key
+Supplier,supplier_name,string,required,non-empty,no,Supplier display name
+Supplier,country,string,required,country name,no,Synthetic country
+Supplier,risk_tier,enum,required,LOW|MEDIUM|HIGH,no,Supplier risk classification
+Supplier,status,enum,required,ACTIVE|INACTIVE,no,Supplier lifecycle
+MaterialLot,material_lot_id,string,required,RAWLOT-<supplier-id>-2026-######,unique,Primary key; supplier ID must exist
+MaterialLot,supplier_id,string,required,SUP-####,no,FK Supplier.supplier_id
+MaterialLot,material_id,string,required,MAT-###,no,Must exist in BOM material catalog
+MaterialLot,received_date,date,required,ISO YYYY-MM-DD,no,Must not be after generation date
+MaterialLot,quantity_received,decimal,required,>= 0,no,Unit EA
+MaterialLot,quantity_available,decimal,required,0..quantity_received,no,Derived from consumption
+MaterialLot,unit,string,required,EA,no,Unit of measure
+MaterialLot,status,enum,required,RECEIVED|AVAILABLE|PARTIALLY_CONSUMED|DEPLETED,no,Derived lifecycle state
+Product,product_id,string,required,PROD-###,unique,Primary key
+Product,product_name,string,required,non-empty,no,Product name
+Product,category,enum,required,Electronics|Medical Device|Industrial,no,Product category
+Product,unit,string,required,EA,no,Unit of measure
+BOM,bom_id,string,required,BOM-###-R##,composite,BOM revision identifier
+BOM,product_id,string,required,PROD-###,no,FK Product.product_id
+BOM,material_id,string,required,MAT-###,composite,Component material
+BOM,quantity_per_unit,decimal,required,> 0,no,Material units per finished unit
+BOM,effective_from,date,required,ISO date,no,Start of BOM validity
+BOM,effective_to,date,optional,ISO date or blank,no,End date must be >= effective_from
+BOM,revision,string,required,R##,no,Revision label
+ProductionOrder,production_order_id,string,required,WO-2026-######,unique,Primary key
+ProductionOrder,product_id,string,required,PROD-###,no,FK Product.product_id
+ProductionOrder,bom_id,string,required,BOM-###-R##,no,Must match product BOM
+ProductionOrder,planned_quantity,decimal,required,> 0,no,EA
+ProductionOrder,actual_quantity,decimal,required,>= 0,no,EA
+ProductionOrder,planned_start,date,required,ISO date,no,Must be <= actual_end
+ProductionOrder,actual_start,date,required,ISO date,no,Must be <= actual_end
+ProductionOrder,actual_end,date,required,ISO date,no,Must be >= actual_start
+ProductionOrder,status,enum,required,PLANNED|RELEASED|IN_PROGRESS|COMPLETED|CANCELLED,no,Lifecycle state
+MaterialConsumption,consumption_id,string,required,CON-#######,unique,Bridge primary key
+MaterialConsumption,production_order_id,string,required,WO-2026-######,no,FK ProductionOrder
+MaterialConsumption,material_lot_id,string,required,RAWLOT-...,no,FK MaterialLot; intentional orphan anomaly is labelled
+MaterialConsumption,material_id,string,required,MAT-###,no,Must match referenced lot and BOM
+MaterialConsumption,quantity_consumed,decimal,required,> 0,no,EA; must reconcile to lot balance
+MaterialConsumption,consumed_at,date,required,ISO date,no,Within production interval
+FinishedLot,finished_lot_id,string,required,FINLOT-######,unique,Primary key
+FinishedLot,production_order_id,string,required,WO-2026-######,no,FK ProductionOrder
+FinishedLot,product_id,string,required,PROD-###,no,Must match production order product
+FinishedLot,manufactured_date,date,required,ISO date,no,Within/after production interval
+FinishedLot,quantity_produced,decimal,required,> 0,no,EA; sum should reconcile to production actual
+FinishedLot,quantity_available,decimal,required,0..quantity_produced,no,Derived stock balance
+FinishedLot,status,enum,required,AVAILABLE|QUARANTINED|RECALLED,no,Lifecycle state
+Shipment,shipment_id,string,required,SHP-2026-######,unique,Primary key
+Shipment,carrier_name,string,required,non-empty,no,Carrier
+Shipment,warehouse_id,string,required,WH-##,no,Dispatch warehouse
+Shipment,dispatch_date,date,required,ISO date,no,Shipment dispatch date
+Shipment,status,enum,required,PLANNED|DISPATCHED|DELIVERED|HELD,no,Lifecycle state
+ShipmentLot,shipment_lot_id,string,required,SL-#######,unique,Bridge primary key
+ShipmentLot,shipment_id,string,required,SHP-2026-######,no,FK Shipment
+ShipmentLot,finished_lot_id,string,required,FINLOT-######,no,FK FinishedLot
+ShipmentLot,quantity_shipped,decimal,required,> 0,no,EA
+Customer,customer_id,string,required,CUST-#####,unique,Primary key
+Customer,customer_name,string,required,non-empty,no,Customer display name
+Customer,customer_type,enum,required,DISTRIBUTOR|RETAILER|HOSPITAL|MANUFACTURER,no,Customer segment
+Customer,country,string,required,country name,no,Synthetic country
+Delivery,delivery_id,string,required,DEL-#######,unique,Primary key
+Delivery,shipment_id,string,required,SHP-2026-######,no,FK Shipment
+Delivery,finished_lot_id,string,required,FINLOT-######,no,FK FinishedLot
+Delivery,customer_id,string,required,CUST-#####,no,FK Customer
+Delivery,delivery_date,date,required,ISO date,no,Must be >= dispatch date in production implementation
+Delivery,quantity_delivered,decimal,required,> 0,no,EA; aggregate <= produced quantity
+Delivery,status,enum,required,IN_TRANSIT|DELIVERED|RETURNED|HELD,no,Lifecycle state
+RecallCase,recall_case_id,string,required,REC-2026-######,unique,Primary key
+RecallCase,trigger_entity_type,enum,required,RAW|FINISHED,no,Type of trigger lot
+RecallCase,trigger_lot_id,string,required,existing lot ID,no,Polymorphic reference to raw or finished lot
+RecallCase,reason,string,required,non-empty,no,Recall reason
+RecallCase,severity,enum,required,LOW|MEDIUM|HIGH|CRITICAL,no,Severity
+RecallCase,opened_at,date,required,ISO date,no,Recall open date
+RecallCase,status,enum,required,OPEN|IN_PROGRESS|COMPLETED|CLOSED,no,Recall lifecycle
+RecallCase,scope_delivery_count,integer,required,>= 0,no,Derived from downstream genealogy
+RecallCase,scope_quantity,decimal,required,>= 0,no,Derived delivered quantity in scope
+RecallAction,recall_action_id,string,required,ACT-########,unique,Primary key
+RecallAction,recall_case_id,string,required,REC-2026-######,no,FK RecallCase
+RecallAction,action_type,enum,required,NOTIFY_CUSTOMER|QUARANTINE|RECOVER|DISPOSE,no,Action
+RecallAction,target_type,enum,required,CUSTOMER|FINISHED_LOT|WAREHOUSE|DELIVERY,no,Target entity type
+RecallAction,target_id,string,required,target ID,no,Target identifier
+RecallAction,action_date,date,required,ISO date,no,Action timestamp/date
+RecallAction,status,enum,required,PENDING|SENT|COMPLETED|FAILED,no,Action outcome
+RecallAction,quantity,decimal,required,>= 0,no,EA when applicable
+RecallAction,notes,string,optional,free text,no,Exception/evidence note
+StateEvent,event_id,string,required,EVT-########,unique,Append-only event ID
+StateEvent,entity_type,string,required,entity name,no,Entity type
+StateEvent,entity_id,string,required,entity ID,no,Polymorphic entity reference
+StateEvent,from_state,string,optional,valid prior state,no,Prior state
+StateEvent,to_state,string,required,valid next state,no,New state
+StateEvent,event_time,date,required,ISO date,no,Event date/time
+StateEvent,reason,string,required,non-empty,no,Recall/action reason
+MaterialConsumption,consumption_id,string,required,CON-#######,unique,Bridge primary key
+MaterialConsumption,production_order_id,string,required,WO-2026-######,no,FK ProductionOrder
+MaterialConsumption,material_lot_id,string,required,RAWLOT-...,no,FK MaterialLot; planted orphan is labelled
+MaterialConsumption,material_id,string,required,MAT-###,no,Must match lot and applicable BOM
+MaterialConsumption,quantity_consumed,decimal,required,> 0,no,Consumption quantity in EA
+MaterialConsumption,consumed_at,date,required,ISO YYYY-MM-DD,no,Production consumption date
+ShipmentLot,shipment_lot_id,string,required,SL-#######,unique,Bridge primary key
+ShipmentLot,shipment_id,string,required,SHP-2026-######,no,FK Shipment
+ShipmentLot,finished_lot_id,string,required,FINLOT-######,no,FK FinishedLot
+ShipmentLot,quantity_shipped,decimal,required,> 0,no,Must reconcile to deliveries for shipment/finished lot
+StateEvent,event_id,string,required,EVT-########,unique,Append-only event primary key
+StateEvent,entity_type,string,required,entity name,no,Type of entity changed
+StateEvent,entity_id,string,required,entity ID,no,Entity identifier
+StateEvent,from_state,string,optional,prior lifecycle state,no,Previous state
+StateEvent,to_state,string,required,valid lifecycle state,no,New state
+StateEvent,event_time,date,required,ISO date,no,Event timestamp/date
+StateEvent,reason,string,required,non-empty,no,Reason for state transition

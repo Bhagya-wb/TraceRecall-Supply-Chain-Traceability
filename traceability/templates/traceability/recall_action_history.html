@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Recall Action History - TraceRecall</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f6f9;
+            margin: 0;
+            padding: 30px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: auto;
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 3px 12px rgba(0,0,0,0.08);
+        }
+
+        h1 {
+            color: #1f2937;
+        }
+
+        p {
+            color: #64748b;
+        }
+
+        .table-wrapper {
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 25px;
+        }
+
+        th, td {
+            padding: 13px;
+            border-bottom: 1px solid #e5e7eb;
+            text-align: left;
+            white-space: nowrap;
+        }
+
+        th {
+            background: #1e293b;
+            color: white;
+        }
+
+        tr:hover {
+            background: #f8fafc;
+        }
+
+        .status {
+            background: #dcfce7;
+            color: #166534;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-weight: bold;
+        }
+
+        .back {
+            display: inline-block;
+            margin-top: 25px;
+            text-decoration: none;
+            background: #2563eb;
+            color: white;
+            padding: 10px 18px;
+            border-radius: 6px;
+        }
+
+        .empty {
+            text-align: center;
+            padding: 25px;
+            color: #64748b;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <h1>Recall Action History</h1>
+    <p>Supply Chain Traceability and Product Recall Monitoring</p>
+
+    <div class="table-wrapper">
+        <table>
+            <thead>
+                <tr>
+                    <th>Action ID</th>
+                    <th>Recall ID</th>
+                    <th>Action Type</th>
+                    <th>Target Type</th>
+                    <th>Target ID</th>
+                    <th>Date</th>
+                    <th>Quantity</th>
+                    <th>Status</th>
+                    <th>Notes</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for action in actions %}
+                <tr>
+                    <td>{{ action.recall_action_id }}</td>
+                    <td>{{ action.recall_case.recall_case_id }}</td>
+                    <td>{{ action.action_type }}</td>
+                    <td>{{ action.target_type }}</td>
+                    <td>{{ action.target_id }}</td>
+                    <td>{{ action.action_date }}</td>
+                    <td>{{ action.quantity }}</td>
+                    <td><span class="status">{{ action.status }}</span></td>
+                    <td>{{ action.notes|default:"-" }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="9" class="empty">
+                        No recall actions found.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <a href="/" class="back">Back to Dashboard</a>
+
+</div>
+
+</body>
+</html>

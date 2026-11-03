@@ -1,0 +1,346 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TraceRecall - Recall Simulation</title>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            background: #f3f6fb;
+            color: #1e293b;
+        }
+
+        header {
+            background: #172554;
+            color: white;
+            padding: 22px 6%;
+        }
+
+        header h1 {
+            font-size: 25px;
+        }
+
+        header p {
+            margin-top: 7px;
+            color: #cbd5e1;
+        }
+
+        header a {
+            color: #bfdbfe;
+            text-decoration: none;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 35px auto;
+            padding: 0 20px;
+        }
+
+        .card {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            margin-bottom: 22px;
+            box-shadow: 0 3px 12px #0000000d;
+        }
+
+        h2 {
+            color: #172554;
+            margin-bottom: 15px;
+        }
+
+        h3 {
+            margin: 18px 0 12px;
+            color: #1e40af;
+        }
+
+        .search-box {
+            display: flex;
+            gap: 10px;
+        }
+
+        input {
+            flex: 1;
+            padding: 13px;
+            border: 1px solid #cbd5e1;
+            border-radius: 7px;
+            font-size: 15px;
+        }
+
+        button {
+            background: #dc2626;
+            color: white;
+            border: none;
+            padding: 13px 22px;
+            border-radius: 7px;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background: #b91c1c;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+            gap: 15px;
+        }
+
+        .info {
+            background: #f8fafc;
+            padding: 17px;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            margin-bottom: 10px;
+        }
+
+        .info strong {
+            display: block;
+            color: #64748b;
+            margin-bottom: 8px;
+            font-size: 13px;
+        }
+
+        .info span {
+            font-weight: bold;
+            overflow-wrap: anywhere;
+        }
+
+        .error {
+            color: #dc2626;
+            background: #fee2e2;
+            padding: 15px;
+            border-radius: 7px;
+            margin-bottom: 20px;
+        }
+
+        .muted {
+            color: #64748b;
+        }
+
+        .warning {
+            background: #fff7ed;
+            border-left: 4px solid #ea580c;
+            padding: 15px;
+            border-radius: 7px;
+            margin-bottom: 20px;
+        }
+
+        .recall-button {
+            background: #dc2626;
+            margin-bottom: 22px;
+        }
+
+        @media (max-width: 600px) {
+            .search-box {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<header>
+    <h1>TraceRecall</h1>
+    <p>Product Recall Simulation System</p>
+    <p><a href="/">← Back to Dashboard</a></p>
+</header>
+
+<div class="container">
+
+    <!-- Search Section -->
+    <div class="card">
+        <h2>Recall Simulation</h2>
+
+        <p class="muted">
+            Enter a defective Material Lot ID to identify affected
+            production orders, finished products, shipments and customers.
+        </p>
+
+        <br>
+
+        <form method="GET" class="search-box">
+            <input
+                type="text"
+                name="lot_id"
+                placeholder="Enter Material Lot ID"
+                value="{{ lot_id }}"
+                required
+            >
+
+            <button type="submit">Simulate Recall</button>
+        </form>
+    </div>
+
+    <!-- Error Message -->
+    {% if error %}
+        <div class="error">{{ error }}</div>
+    {% endif %}
+
+    <!-- Recall Results -->
+    {% if material_lot %}
+
+        <!-- Create Recall Case -->
+        <div class="card">
+            <h2>Create Recall Case</h2>
+
+            <p class="muted">
+                Create a recall case for this affected material lot.
+            </p>
+
+            <br>
+
+            <form method="POST" action="{% url 'create_recall_case' %}">
+                {% csrf_token %}
+
+                <input
+                    type="hidden"
+                    name="lot_id"
+                    value="{{ material_lot.material_lot_id }}"
+                >
+
+                <input
+                    type="hidden"
+                    name="reason"
+                    value="SYNTHETIC_CONTAMINATION"
+                >
+
+                <button type="submit" class="recall-button">
+                    Create Recall Case
+                </button>
+            </form>
+        </div>
+
+        <!-- Recall Impact Summary -->
+        <div class="card">
+            <h2>Recall Impact Summary</h2>
+
+            <div class="warning">
+                <strong>Recall Simulation:</strong>
+                The following records are linked to this material lot.
+                This is an impact analysis, not an actual recall notification.
+            </div>
+
+            <div class="grid">
+
+                <div class="info">
+                    <strong>Material Lot</strong>
+                    <span>{{ material_lot.material_lot_id }}</span>
+                </div>
+
+                <div class="info">
+                    <strong>Supplier</strong>
+                    <span>{{ material_lot.supplier.supplier_name }}</span>
+                </div>
+
+                <div class="info">
+                    <strong>Affected Finished Lots</strong>
+                    <span>{{ affected_finished_count }}</span>
+                </div>
+
+                <div class="info">
+                    <strong>Affected Shipments</strong>
+                    <span>{{ affected_shipment_count }}</span>
+                </div>
+
+                <div class="info">
+                    <strong>Delivery Records</strong>
+                    <span>{{ affected_delivery_count }}</span>
+                </div>
+
+                <div class="info">
+                    <strong>Quantity in Delivery Records</strong>
+                    <span>{{ affected_quantity }}</span>
+                </div>
+
+            </div>
+        </div>
+
+        <!-- Production Orders -->
+        <div class="card">
+            <h2>Affected Production Orders</h2>
+
+            {% for item in consumptions %}
+                <div class="info">
+                    <strong>Production Order</strong>
+                    <span>{{ item.production_order.production_order_id }}</span>
+                    <p>Product: {{ item.production_order.product_id }}</p>
+                    <p>Quantity Consumed: {{ item.quantity_consumed }}</p>
+                </div>
+            {% empty %}
+                <p class="muted">No production orders found.</p>
+            {% endfor %}
+        </div>
+
+        <!-- Finished Lots -->
+        <div class="card">
+            <h2>Affected Finished Lots</h2>
+
+            {% for lot in finished_lots %}
+                <div class="info">
+                    <strong>Finished Lot ID</strong>
+                    <span>{{ lot.finished_lot_id }}</span>
+                    <p>Product: {{ lot.product_id }}</p>
+                    <p>Quantity Produced: {{ lot.quantity_produced }}</p>
+                    <p>Available Quantity: {{ lot.quantity_available }}</p>
+                    <p>Status: {{ lot.status }}</p>
+                </div>
+            {% empty %}
+                <p class="muted">No finished lots found.</p>
+            {% endfor %}
+        </div>
+
+        <!-- Shipments -->
+        <div class="card">
+            <h2>Affected Shipments</h2>
+
+            {% for item in shipment_lots %}
+                <div class="info">
+                    <strong>Shipment ID</strong>
+                    <span>{{ item.shipment.shipment_id }}</span>
+                    <p>Finished Lot: {{ item.finished_lot.finished_lot_id }}</p>
+                    <p>Carrier: {{ item.shipment.carrier_name }}</p>
+                    <p>Warehouse: {{ item.shipment.warehouse_id }}</p>
+                    <p>Quantity Shipped: {{ item.quantity_shipped }}</p>
+                    <p>Status: {{ item.shipment.status }}</p>
+                </div>
+            {% empty %}
+                <p class="muted">No affected shipments found.</p>
+            {% endfor %}
+        </div>
+
+        <!-- Customers -->
+        <div class="card">
+            <h2>Affected Customers</h2>
+
+            {% for item in deliveries %}
+                <div class="info">
+                    <strong>Delivery ID</strong>
+                    <span>{{ item.delivery_id }}</span>
+                    <p>Customer ID: {{ item.customer_id }}</p>
+                    <p>Finished Lot: {{ item.finished_lot.finished_lot_id }}</p>
+                    <p>Quantity: {{ item.quantity }}</p>
+                    <p>Delivery Date: {{ item.delivery_date }}</p>
+                    <p>Status: {{ item.status }}</p>
+                </div>
+            {% empty %}
+                <p class="muted">No customer delivery records found.</p>
+            {% endfor %}
+        </div>
+
+    {% endif %}
+
+</div>
+
+</body>
+</html>

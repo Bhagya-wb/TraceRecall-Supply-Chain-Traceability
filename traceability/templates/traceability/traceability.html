@@ -1,0 +1,367 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TraceRecall - Lot Traceability</title>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            background: #f3f6fb;
+            color: #1e293b;
+        }
+
+        header {
+            background: #172554;
+            color: white;
+            padding: 22px 6%;
+        }
+
+        header h1 {
+            font-size: 25px;
+        }
+
+        header p {
+            margin-top: 7px;
+            color: #cbd5e1;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 35px auto;
+            padding: 0 20px;
+        }
+
+        .search-card, .result-card {
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            margin-bottom: 22px;
+            box-shadow: 0 3px 12px #0000000d;
+        }
+
+        h2 {
+            margin-bottom: 15px;
+            color: #172554;
+        }
+
+        .search-box {
+            display: flex;
+            gap: 10px;
+        }
+
+        input {
+            flex: 1;
+            padding: 13px;
+            border: 1px solid #cbd5e1;
+            border-radius: 7px;
+            font-size: 15px;
+        }
+
+        button {
+            background: #2563eb;
+            color: white;
+            border: none;
+            padding: 13px 22px;
+            border-radius: 7px;
+            cursor: pointer;
+            font-size: 15px;
+        }
+
+        button:hover {
+            background: #1d4ed8;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+
+        .info {
+            background: #f8fafc;
+            padding: 17px;
+            border-radius: 8px;
+            border: 1px solid #e2e8f0;
+        }
+
+        .info strong {
+            display: block;
+            margin-bottom: 8px;
+            color: #64748b;
+            font-size: 13px;
+        }
+
+        .info span {
+            font-weight: bold;
+            overflow-wrap: anywhere;
+        }
+
+        .timeline {
+            border-left: 3px solid #2563eb;
+            margin: 20px 0 10px 12px;
+            padding-left: 25px;
+        }
+
+        .timeline-item {
+            position: relative;
+            margin-bottom: 25px;
+        }
+
+        .timeline-item::before {
+            content: "";
+            position: absolute;
+            left: -34px;
+            top: 3px;
+            width: 13px;
+            height: 13px;
+            border-radius: 50%;
+            background: #2563eb;
+        }
+
+        .timeline-item h3 {
+            margin-bottom: 7px;
+            color: #172554;
+        }
+
+        .error {
+            color: #dc2626;
+            background: #fee2e2;
+            padding: 15px;
+            border-radius: 7px;
+        }
+
+        .muted {
+            color: #64748b;
+            font-size: 14px;
+        }
+
+        a {
+            color: #bfdbfe;
+            text-decoration: none;
+        }
+
+        @media (max-width: 600px) {
+            .search-box {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<header>
+    <h1>TraceRecall</h1>
+    <p>Supply Chain Traceability System</p>
+    <p><a href="/">← Back to Dashboard</a></p>
+</header>
+
+<div class="container">
+
+    <div class="search-card">
+        <h2>Material Lot Traceability</h2>
+        <p class="muted">
+            Enter a Material Lot ID to trace its supply chain journey.
+        </p>
+
+        <br>
+
+        <form method="GET" class="search-box">
+            <input
+                type="text"
+                name="lot_id"
+                placeholder="Example: RAWLOT-SUP-0001-2026-000001"
+                value="{{ lot_id }}"
+                required
+            >
+            <button type="submit">Search Lot</button>
+        </form>
+    </div>
+
+    {% if error %}
+        <div class="error">{{ error }}</div>
+    {% endif %}
+
+    {% if material_lot %}
+
+        <div class="result-card">
+            <h2>Material Lot Details</h2>
+
+            <div class="info-grid">
+                <div class="info">
+                    <strong>Material Lot ID</strong>
+                    <span>{{ material_lot.material_lot_id }}</span>
+                </div>
+
+                <div class="info">
+                    <strong>Supplier</strong>
+                    <span>{{ material_lot.supplier.supplier_name }}</span>
+                </div>
+
+                <div class="info">
+                    <strong>Supplier Country</strong>
+                    <span>{{ material_lot.supplier.country }}</span>
+                </div>
+
+                <div class="info">
+                    <strong>Supplier Risk</strong>
+                    <span>{{ material_lot.supplier.risk_tier }}</span>
+                </div>
+
+                <div class="info">
+                    <strong>Material Lot Status</strong>
+                    <span>{{ material_lot.status }}</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="result-card">
+            <h2>Production Traceability</h2>
+
+            {% if consumptions %}
+                <div class="timeline">
+
+                    {% for item in consumptions %}
+
+                        <div class="timeline-item">
+                            <h3>Production Order</h3>
+                            <p>
+                                <strong>Order ID:</strong>
+                                {{ item.production_order.production_order_id }}
+                            </p>
+
+                            <p>
+                                <strong>Product ID:</strong>
+                                {{ item.production_order.product_id }}
+                            </p>
+
+                            <p>
+                                <strong>Quantity Consumed:</strong>
+                                {{ item.quantity_consumed }}
+                            </p>
+
+                            <p>
+                                <strong>Material ID:</strong>
+                                {{ item.material_id }}
+                            </p>
+
+                            <p>
+                                <strong>Consumed Date:</strong>
+                                {{ item.consumed_at }}
+                            </p>
+                        </div>
+
+                    {% endfor %}
+
+                </div>
+            {% else %}
+                <p class="muted">
+                    No production consumption records found for this lot.
+                </p>
+            {% endif %}
+        </div>
+<div class="result-card">
+    <h2>Finished Lot Traceability</h2>
+
+    {% if finished_lots %}
+        {% for lot in finished_lots %}
+
+            <div class="info-grid">
+                <div class="info">
+                    <strong>Finished Lot ID</strong>
+                    <span>{{ lot.finished_lot_id }}</span>
+                </div>
+
+                <div class="info">
+                    <strong>Product ID</strong>
+                    <span>{{ lot.product_id }}</span>
+                </div>
+
+                <div class="info">
+                    <strong>Quantity Produced</strong>
+                    <span>{{ lot.quantity_produced }}</span>
+                </div>
+
+                <div class="info">
+                    <strong>Quantity Available</strong>
+                    <span>{{ lot.quantity_available }}</span>
+                </div>
+
+                <div class="info">
+                    <strong>Manufactured Date</strong>
+                    <span>{{ lot.manufactured_date }}</span>
+                </div>
+
+                <div class="info">
+                    <strong>Status</strong>
+                    <span>{{ lot.status }}</span>
+                </div>
+            </div>
+
+            <h3 style="margin:20px 0 12px;">Shipment Details</h3>
+
+            {% for shipment_lot in lot.shipment_lots.all %}
+                <div class="info" style="margin-bottom:12px;">
+                    <p><strong>Shipment ID:</strong>
+                        {{ shipment_lot.shipment.shipment_id }}</p>
+
+                    <p><strong>Carrier:</strong>
+                        {{ shipment_lot.shipment.carrier_name }}</p>
+
+                    <p><strong>Warehouse:</strong>
+                        {{ shipment_lot.shipment.warehouse_id }}</p>
+
+                    <p><strong>Quantity Shipped:</strong>
+                        {{ shipment_lot.quantity_shipped }}</p>
+
+                    <p><strong>Shipment Status:</strong>
+                        {{ shipment_lot.shipment.status }}</p>
+                </div>
+            {% empty %}
+                <p class="muted">No shipment records found.</p>
+            {% endfor %}
+
+            <h3 style="margin:20px 0 12px;">Customer Delivery Details</h3>
+
+            {% for delivery in lot.deliveries.all %}
+                <div class="info" style="margin-bottom:12px;">
+                    <p><strong>Delivery ID:</strong>
+                        {{ delivery.delivery_id }}</p>
+
+                    <p><strong>Customer ID:</strong>
+                        {{ delivery.customer_id }}</p>
+
+                    <p><strong>Delivery Date:</strong>
+                        {{ delivery.delivery_date }}</p>
+
+                    <p><strong>Quantity Delivered:</strong>
+                        {{ delivery.quantity }}</p>
+
+                    <p><strong>Delivery Status:</strong>
+                        {{ delivery.status }}</p>
+                </div>
+            {% empty %}
+                <p class="muted">No customer delivery records found.</p>
+            {% endfor %}
+
+            <hr style="margin:25px 0;">
+        {% endfor %}
+    {% else %}
+        <p class="muted">No finished lots found for this material lot.</p>
+    {% endif %}
+</div>
+    {% endif %}
+
+</div>
+
+</body>
+</html>

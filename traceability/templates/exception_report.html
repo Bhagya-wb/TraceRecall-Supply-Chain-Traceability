@@ -1,0 +1,237 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TraceRecall - Exception Report</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: #f4f6f9;
+            margin: 0;
+            padding: 30px;
+            color: #263238;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: auto;
+        }
+
+        h1 {
+            color: #17365d;
+        }
+
+        .subtitle {
+            color: #607080;
+        }
+
+        .summary {
+            background: white;
+            padding: 22px;
+            border-radius: 10px;
+            margin: 20px 0;
+            box-shadow: 0 2px 8px #ddd;
+        }
+
+        .summary h2 {
+            color: #17365d;
+            margin-top: 0;
+        }
+
+        .total {
+            font-size: 32px;
+            font-weight: bold;
+            color: #b42318;
+        }
+
+        .cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .card {
+            background: white;
+            padding: 20px;
+            border-radius: 9px;
+            box-shadow: 0 2px 8px #ddd;
+            border-top: 4px solid #17365d;
+        }
+
+        .card h3 {
+            font-size: 14px;
+            color: #607080;
+            overflow-wrap: anywhere;
+        }
+
+        .count {
+            font-size: 30px;
+            font-weight: bold;
+            color: #17365d;
+        }
+
+        .table-container {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            margin-top: 25px;
+            box-shadow: 0 2px 8px #ddd;
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 750px;
+        }
+
+        th, td {
+            padding: 13px;
+            text-align: left;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        th {
+            background: #17365d;
+            color: white;
+        }
+
+        tr:hover {
+            background: #f8fafc;
+        }
+
+        .severity {
+            font-weight: bold;
+            color: #b42318;
+        }
+
+        .high {
+            color: #d97706;
+        }
+
+        .actions {
+            margin-top: 25px;
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 11px 18px;
+            border-radius: 6px;
+            text-decoration: none;
+            color: white;
+            background: #17365d;
+        }
+
+        .export {
+            background: #198754;
+        }
+
+        .success {
+            background: #e8f5e9;
+            padding: 20px;
+            border-radius: 8px;
+            color: #2e7d32;
+        }
+
+        @media (max-width: 600px) {
+            body {
+                padding: 15px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+<div class="container">
+
+    <h1>TraceRecall - Exception Report</h1>
+    <p class="subtitle">
+        Supply Chain Traceability and Product Recall Monitoring
+    </p>
+
+    <div class="summary">
+        <h2>Validation Summary</h2>
+        <p>Total Exceptions Detected</p>
+        <div class="total">{{ exceptions|length }}</div>
+    </div>
+
+    {% if exceptions %}
+
+        <h2>Exception Categories</h2>
+
+        {% regroup exceptions by type as exception_groups %}
+
+        <div class="cards">
+            {% for group in exception_groups %}
+                <div class="card">
+                    <h3>{{ group.grouper }}</h3>
+                    <div class="count">{{ group.list|length }}</div>
+                    <p>Detected records</p>
+                </div>
+            {% endfor %}
+        </div>
+
+        <div class="table-container">
+            <h2>Detailed Exception Records</h2>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th>S.No</th>
+                        <th>Exception Type</th>
+                        <th>Entity ID</th>
+                        <th>Details</th>
+                        <th>Severity</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for item in exceptions %}
+                    <tr>
+                        <td>{{ forloop.counter }}</td>
+                        <td>{{ item.type }}</td>
+                        <td>{{ item.entity_id }}</td>
+                        <td>{{ item.message }}</td>
+                        <td>
+                            {% if item.severity == "CRITICAL" %}
+                                <span class="severity">CRITICAL</span>
+                            {% else %}
+                                <span class="severity high">{{ item.severity }}</span>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+    {% else %}
+
+        <div class="success">
+            <h3>No exceptions detected!</h3>
+            <p>All checked records passed the current validation rules.</p>
+        </div>
+
+    {% endif %}
+
+    <div class="actions">
+        <a href="/" class="btn">Back to Dashboard</a>
+        <a href="/export-recall-csv/" class="btn export">
+            Export Recall CSV
+        </a>
+    </div>
+
+</div>
+</body>
+</html>

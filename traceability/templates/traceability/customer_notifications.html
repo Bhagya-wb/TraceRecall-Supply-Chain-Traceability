@@ -1,0 +1,208 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Customer Notifications | TraceRecall</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: Arial, sans-serif;
+        }
+
+        body {
+            margin: 0;
+            padding: 30px;
+            background: #f3f6fb;
+            color: #263248;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: auto;
+        }
+
+        h1 {
+            color: #172554;
+        }
+
+        .card {
+            background: white;
+            padding: 24px;
+            margin: 20px 0;
+            border-radius: 12px;
+            box-shadow: 0 3px 12px rgba(0,0,0,0.06);
+        }
+
+        select, input, button {
+            padding: 11px;
+            margin: 8px 0;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            width: 100%;
+        }
+
+        button {
+            background: #2563eb;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        button:hover {
+            background: #1d4ed8;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+
+        th, td {
+            padding: 13px;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        th {
+            background: #eff6ff;
+        }
+
+        .sent {
+            color: #15803d;
+            font-weight: bold;
+        }
+
+        .pending {
+            color: #d97706;
+            font-weight: bold;
+        }
+
+        .success {
+            background: #dcfce7;
+            color: #166534;
+            padding: 12px;
+            border-radius: 6px;
+        }
+
+        .error {
+            background: #fee2e2;
+            color: #991b1b;
+            padding: 12px;
+            border-radius: 6px;
+        }
+
+        .back {
+            display: inline-block;
+            margin-top: 15px;
+            color: #2563eb;
+            text-decoration: none;
+        }
+    </style>
+</head>
+
+<body>
+<div class="container">
+
+    <h1>Customer Notification Management</h1>
+    <p>Track and record notifications for customers affected by product recalls.</p>
+
+    {% if success_message %}
+        <div class="success">{{ success_message }}</div>
+    {% endif %}
+
+    {% if error_message %}
+        <div class="error">{{ error_message }}</div>
+    {% endif %}
+
+    <div class="card">
+        <h2>Select Recall Case</h2>
+
+        <form method="GET">
+            <select name="recall_id" required>
+                <option value="">-- Select Recall --</option>
+
+                {% for recall in recalls %}
+                    <option value="{{ recall.recall_case_id }}"
+                        {% if selected_recall and selected_recall.recall_case_id == recall.recall_case_id %}
+                            selected
+                        {% endif %}>
+                        {{ recall.recall_case_id }} - {{ recall.trigger_lot_id }}
+                    </option>
+                {% endfor %}
+            </select>
+
+            <button type="submit">View Affected Customers</button>
+        </form>
+    </div>
+
+    {% if selected_recall %}
+    <div class="card">
+        <h2>Recall Information</h2>
+
+        <p><strong>Recall ID:</strong> {{ selected_recall.recall_case_id }}</p>
+        <p><strong>Trigger Lot:</strong> {{ selected_recall.trigger_lot_id }}</p>
+        <p><strong>Reason:</strong> {{ selected_recall.reason }}</p>
+        <p><strong>Status:</strong> {{ selected_recall.status }}</p>
+    </div>
+
+    <div class="card">
+        <h2>Affected Customers</h2>
+
+        {% if customers %}
+        <table>
+            <thead>
+                <tr>
+                    <th>Customer ID</th>
+                    <th>Notification Status</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for customer in customers %}
+                <tr>
+                    <td>{{ customer.customer_id }}</td>
+
+                    <td>
+                        {% if customer.status == "SENT" %}
+                            <span class="sent">SENT</span>
+                        {% else %}
+                            <span class="pending">PENDING</span>
+                        {% endif %}
+                    </td>
+
+                    <td>
+                        {% if customer.status != "SENT" %}
+                        <form method="POST">
+                            {% csrf_token %}
+                            <input type="hidden" name="recall_id"
+                                   value="{{ selected_recall.recall_case_id }}">
+                            <input type="hidden" name="customer_id"
+                                   value="{{ customer.customer_id }}">
+                            <button type="submit">Record Notification</button>
+                        </form>
+                        {% else %}
+                            Already Recorded
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        {% else %}
+            <p>No affected customers found for this recall.</p>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    <a class="back" href="/">← Back to Dashboard</a>
+
+</div>
+</body>
+</html>

@@ -1,0 +1,274 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Recall Details - TraceRecall</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #f3f6fb;
+            margin: 0;
+            padding: 25px;
+            color: #243047;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: auto;
+        }
+
+        .header, .card {
+            background: white;
+            padding: 22px;
+            margin-bottom: 20px;
+            border-radius: 12px;
+            box-shadow: 0 3px 12px #00000010;
+        }
+
+        h1, h2 {
+            color: #172554;
+        }
+
+        .status {
+            display: inline-block;
+            background: #e0f2fe;
+            padding: 8px 14px;
+            border-radius: 20px;
+            font-weight: bold;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 15px;
+        }
+
+        .stat {
+            background: #eff6ff;
+            padding: 18px;
+            border-radius: 10px;
+        }
+
+        .stat h3 {
+            margin: 0 0 10px;
+            color: #475569;
+            font-size: 14px;
+        }
+
+        .stat p {
+            font-size: 23px;
+            font-weight: bold;
+            margin: 0;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 12px;
+        }
+
+        th, td {
+            text-align: left;
+            padding: 12px;
+            border-bottom: 1px solid #e5e7eb;
+        }
+
+        th {
+            background: #eff6ff;
+        }
+
+        .progress {
+            background: #e5e7eb;
+            height: 14px;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            background: #16a34a;
+            height: 100%;
+        }
+
+        a {
+            color: #2563eb;
+            text-decoration: none;
+        }
+
+        .back {
+            display: inline-block;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+
+<body>
+<div class="container">
+
+    <a class="back" href="/recall-recovery/">
+        ← Back to Recall Management
+    </a>
+
+    <div class="header">
+        <h1>Recall Details</h1>
+        <h2>{{ recall.recall_case_id }}</h2>
+        <p><strong>Reason:</strong> {{ recall.reason }}</p>
+        <p><strong>Severity:</strong> {{ recall.severity }}</p>
+        <p>
+            <strong>Status:</strong>
+            <span class="status">{{ recall.status }}</span>
+        </p>
+        <p><strong>Opened Date:</strong> {{ recall.opened_at }}</p>
+    </div>
+
+    <div class="card">
+        <h2>Recovery Summary</h2>
+
+        <div class="grid">
+            <div class="stat">
+                <h3>Affected Quantity</h3>
+                <p>{{ recall.scope_quantity }}</p>
+            </div>
+
+            <div class="stat">
+                <h3>Recovered Quantity</h3>
+                <p>{{ recall.recovered_quantity }}</p>
+            </div>
+
+            <div class="stat">
+                <h3>Pending Quantity</h3>
+                <p>{{ recall.pending_quantity }}</p>
+            </div>
+
+            <div class="stat">
+                <h3>Recovery Percentage</h3>
+                <p>{{ recall.completion_percentage }}%</p>
+            </div>
+        </div>
+
+        <br>
+
+        <div class="progress">
+            <div class="progress-bar"
+                 style="width: {{ recall.completion_percentage }}%">
+            </div>
+        </div>
+    </div>
+
+    <div class="card">
+        <h2>Material Lot & Supplier</h2>
+
+        {% if material_lot %}
+            <p><strong>Material Lot:</strong> {{ material_lot.material_lot_id }}</p>
+            <p><strong>Supplier:</strong> {{ material_lot.supplier.supplier_name }}</p>
+            <p><strong>Lot Status:</strong> {{ material_lot.status }}</p>
+        {% else %}
+            <p>Material lot information not available.</p>
+        {% endif %}
+    </div>
+
+    <div class="card">
+        <h2>Affected Production Orders</h2>
+
+        <table>
+            <tr>
+                <th>Production Order</th>
+                <th>Product ID</th>
+                <th>Quantity</th>
+                <th>Status</th>
+            </tr>
+
+            {% for order in production_orders %}
+            <tr>
+                <td>{{ order.production_order_id }}</td>
+                <td>{{ order.product_id }}</td>
+                <td>{{ order.actual_quantity }}</td>
+                <td>{{ order.status }}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="4">No production orders found.</td></tr>
+            {% endfor %}
+        </table>
+    </div>
+
+    <div class="card">
+        <h2>Affected Finished Lots</h2>
+
+        <table>
+            <tr>
+                <th>Finished Lot</th>
+                <th>Product</th>
+                <th>Produced</th>
+                <th>Available</th>
+                <th>Status</th>
+            </tr>
+
+            {% for lot in finished_lots %}
+            <tr>
+                <td>{{ lot.finished_lot_id }}</td>
+                <td>{{ lot.product_id }}</td>
+                <td>{{ lot.quantity_produced }}</td>
+                <td>{{ lot.quantity_available }}</td>
+                <td>{{ lot.status }}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="5">No finished lots found.</td></tr>
+            {% endfor %}
+        </table>
+    </div>
+
+    <div class="card">
+        <h2>Affected Shipments</h2>
+
+        <table>
+            <tr>
+                <th>Shipment ID</th>
+                <th>Finished Lot</th>
+                <th>Carrier</th>
+                <th>Quantity Shipped</th>
+                <th>Status</th>
+            </tr>
+
+            {% for item in shipment_lots %}
+            <tr>
+                <td>{{ item.shipment.shipment_id }}</td>
+                <td>{{ item.finished_lot.finished_lot_id }}</td>
+                <td>{{ item.shipment.carrier_name }}</td>
+                <td>{{ item.quantity_shipped }}</td>
+                <td>{{ item.shipment.status }}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="5">No shipments found.</td></tr>
+            {% endfor %}
+        </table>
+    </div>
+
+    <div class="card">
+        <h2>Affected Customers</h2>
+
+        <table>
+            <tr>
+                <th>Delivery ID</th>
+                <th>Customer ID</th>
+                <th>Finished Lot</th>
+                <th>Quantity</th>
+                <th>Status</th>
+            </tr>
+
+            {% for item in deliveries %}
+            <tr>
+                <td>{{ item.delivery_id }}</td>
+                <td>{{ item.customer_id }}</td>
+                <td>{{ item.finished_lot.finished_lot_id }}</td>
+                <td>{{ item.quantity }}</td>
+                <td>{{ item.status }}</td>
+            </tr>
+            {% empty %}
+            <tr><td colspan="5">No deliveries found.</td></tr>
+            {% endfor %}
+        </table>
+    </div>
+
+</div>
+</body>
+</html>

@@ -1,85 +1,108 @@
-# Supply Chain Traceability & Product Recall Simulator
+# TraceRecall – Supply Chain Traceability & Product Recall System
 
-A reproducible Python project that creates synthetic supplier-to-customer genealogy data, simulates recall execution, injects labelled exceptions, and exports CSV, JSON, and SQLite-compatible SQL seed data.
+## Project Overview
+TraceRecall is a Django-based web application developed to track products across the supply chain and manage product recalls efficiently.
 
-## Quick start
+The system helps identify affected raw materials, production lots, warehouses, shipments, and customers. It also supports recall simulation, product quarantine, customer notifications, and recovery tracking.
 
-Requires Python 3.9+; no third-party packages are required.
+## Key Features
+- **Supply Chain Traceability:** Track materials from suppliers to customers.
+- **Recall Simulation:** Identify affected lots and calculate recall scope.
+- **Recall Case Management:** Create and manage product recall cases.
+- **Product Quarantine:** Quarantine affected products to prevent further distribution.
+- **Customer Notifications:** Record customer notification activities.
+- **Recovery Tracking:** Monitor recovered quantities and recall progress.
+- **Dashboard Analytics:** View recall statistics and key information.
+- **Exception Reports:** Generate reports for supply chain issues.
+- **CSV Export:** Export relevant report data.
 
-```bash
-python src/generate.py --scale starter --seed 20261022 --out output
+## Technologies Used
+- **Backend:** Python, Django
+- **Database:** MySQL
+- **Frontend:** HTML, CSS, Django Templates
+- **Data Processing:** Python, CSV
+- **Tools:** VS Code, Git, GitHub
+
+## Project Structure
+```text
+TraceRecall/
+├── config/
+├── traceability/
+│   ├── migrations/
+│   ├── templates/
+│   ├── models.py
+│   ├── views.py
+│   ├── urls.py
+│   └── tests.py
+├── docs/
+├── src/
+├── output_full_2/
+├── output_full_test/
+├── manage.py
+├── requirements.txt
+└── README.md
 ```
 
-Generate the requested full volume:
+## Installation and Setup
 
+### 1. Clone the repository
 ```bash
-python src/generate.py --scale full --seed 20261022 --out output_full
+git clone YOUR_GITHUB_REPOSITORY_URL
+cd supply_chain_traceability_project
 ```
 
-Run twice into separate folders to compare `source_manifest.json` checksums:
-
+### 2. Create a virtual environment
 ```bash
-python src/generate.py --scale starter --seed 20261022 --out run_a
-python src/generate.py --scale starter --seed 20261022 --out run_b
+python -m venv venv
 ```
 
-The `sample_data/` directory contains the starter run, and `full_data/` contains the requested full-volume run. The generator is parameterized: starter and full runs use the same rules and fixed seed.
+### 3. Activate the virtual environment
 
-## Business workflow
+Windows PowerShell:
+```powershell
+.\venv\Scripts\Activate.ps1
+```
 
-1. Create suppliers, products, BOMs, and customers.
-2. Create raw material lots with immutable supplier-linked IDs.
-3. Create production orders and consumption bridge records linking each order to raw lots.
-4. Create finished lots from production orders.
-5. Create shipments, shipment-lot bridge records, and customer deliveries.
-6. Plant synthetic contamination in selected source lots and create recall cases.
-7. Traverse raw-lot → production order → finished lot → shipment/delivery genealogy.
-8. Create explicit notification, quarantine, recovery-ready action records and state events.
-9. Inject four labelled negative scenarios and report them without silently corrupting unrelated records.
+### 4. Install dependencies
+```bash
+pip install -r requirements.txt
+```
 
-## Main entities and cardinality
+### 5. Configure environment variables
 
-| Parent | Child / bridge | Cardinality |
-|---|---|---|
-| Supplier | MaterialLot | 1:N |
-| Product | BOM | 1:N over revisions/components |
-| Product | ProductionOrder | 1:N |
-| BOM | ProductionOrder | 1:N |
-| ProductionOrder | MaterialConsumption | 1:N |
-| MaterialLot | MaterialConsumption | 1:N |
-| ProductionOrder | FinishedLot | 1:N |
-| Shipment | ShipmentLot | 1:N |
-| FinishedLot | ShipmentLot | 1:N |
-| Shipment | Delivery | 1:N |
-| Customer | Delivery | 1:N |
-| FinishedLot | Delivery | 1:N |
-| RecallCase | RecallAction | 1:N |
-| Entity | StateEvent | 1:N |
+Create a `.env` file in the project root using `.env.example` as a template.
 
-`MaterialConsumption` and `ShipmentLot` are bridge tables. `Delivery` links a shipment, finished lot, and customer. Effective dates are carried by BOM (`effective_from`, `effective_to`) and event/transaction dates. IDs are immutable. Lifecycle changes are represented by append-only `state_events.csv`, not overwritten history.
+Add your own Django secret key and MySQL database credentials. Never upload your actual `.env` file.
 
-## ID conventions
+### 6. Create the MySQL database
+```sql
+CREATE DATABASE tracerecall_db;
+```
 
-- Supplier: `SUP-0001`
-- Raw lot: `RAWLOT-SUP-0001-2026-000001`
-- Production order: `WO-2026-000001`
-- Finished lot: `FINLOT-000001`
-- Shipment: `SHP-2026-000001`
-- Recall: `REC-2026-000001`
+### 7. Run migrations
+```bash
+python manage.py migrate
+```
 
-## Four planted exceptions
+### 8. Start the development server
+```bash
+python manage.py runserver
+```
 
-1. Missing raw input lot reference in a consumption record.
-2. Delivery quantity exceeds the corresponding finished-lot produced quantity.
-3. One downstream customer notification is marked failed.
-4. Recalled finished-lot inventory remains available for sale (quarantine action failed).
+Open in your browser:
+`http://127.0.0.1:8000/`
 
-These are deliberately represented as labelled exceptions. `ground_truth.csv/json` is separate from operational input tables and must never be used as a model feature.
+## Testing
+Run the Django test suite:
+```bash
+python manage.py test traceability
+```
 
-## Outputs
+## Project Objective
+To improve supply chain transparency and support faster, more accurate product recall management through end-to-end lot tracking and recall monitoring.
 
-Each operational table is exported as both CSV and JSON. `seed.sql` contains SQLite-compatible `CREATE TABLE` and `INSERT` statements. `validation_summary.json` reports row counts, duplicate primary keys, foreign-key exceptions, and overdelivery detection. `source_manifest.json` records SHA-256 checksums. The source manifest documents that the data is fully synthetic and no external dataset was used.
+## Author
+Nallabothula Venkata Bhagya Lakshmi
 
-## Important interpretation
-
-The generator produces synthetic operational data for development, testing, and demonstration only. It is not a validated food, pharmaceutical, medical-device, or regulatory recall system. Before production use, add role-based access, audit controls, real carrier/customer integrations, jurisdiction-specific retention rules, and independent validation.
+## Note
+This project uses simulated supply chain data and records customer notification activities within the application. Actual SMS and email delivery is not configured.

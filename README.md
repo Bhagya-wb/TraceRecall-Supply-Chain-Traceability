@@ -106,3 +106,20 @@ Nallabothula Venkata Bhagya Lakshmi
 
 ## Note
 This project uses simulated supply chain data and records customer notification activities within the application. Actual SMS and email delivery is not configured.
+
+## 📸 Application Screenshots
+
+### 1. Supply Chain Traceability
+![Traceability](screenshots/traceability.png)
+
+### 2. Recall Simulation
+![Recall Simulation](screenshots/recall-simulation.png)
+
+### 3. Product Quarantine
+![Product Quarantine](screenshots/product-quarantine.png)
+
+### 4. Customer Notifications
+![Customer Notifications](screenshots/customer-notifications.png)
+
+### 5. Recall Action History
+![Recall History](screenshots/recall-history.png)

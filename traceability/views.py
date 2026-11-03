@@ -343,61 +343,84 @@ def create_recall_case(request):
 # RECALL RECOVERY
 # --------------------------------------------------
 
-@require_POST
 def recall_recovery(request):
-    recall_id = request.POST.get("recall_case_id")
-    quantity = request.POST.get("quantity")
-
-    recall = get_object_or_404(
-        RecallCase,
-        recall_case_id=recall_id,
-    )
-
-    try:
-        quantity = int(quantity)
-    except (TypeError, ValueError):
-        return HttpResponse("Please enter a valid quantity.", status=400)
-
-    if quantity <= 0:
-        return HttpResponse("Quantity must be greater than zero.", status=400)
-
-    pending = max(
-        recall.scope_quantity - recall.recovered_quantity,
-        0,
-    )
-
-    if quantity > pending:
-        return HttpResponse(
-            f"Quantity cannot exceed the pending quantity ({pending}).",
-            status=400,
+    # GET request: Open the Recall Recovery page
+    if request.method == "GET":
+        recalls = RecallCase.objects.all().order_by("-opened_at")
+        return render(
+            request,
+            "traceability/recall_recovery.html",
+            {
+                "recalls": recalls,
+                "recall_cases": recalls,
+            },
         )
 
-    recall.recovered_quantity += quantity
+    # POST request: Record recovered quantity
+    if request.method == "POST":
+        recall_id = request.POST.get("recall_case_id")
+        quantity = request.POST.get("quantity")
 
-    if recall.recovered_quantity >= recall.scope_quantity:
-        recall.status = "COMPLETED"
-        recall.completed_at = timezone.now()
-    else:
-        recall.status = "IN_PROGRESS"
+        recall = get_object_or_404(
+            RecallCase,
+            recall_case_id=recall_id,
+        )
 
-    recall.save()
+        try:
+            quantity = int(quantity)
+        except (TypeError, ValueError):
+            return HttpResponse(
+                "Please enter a valid quantity.",
+                status=400,
+            )
 
-    RecallAction.objects.create(
-        recall_action_id=(
-            f"ACT-RECOVER-{timezone.now().strftime('%Y%m%d%H%M%S%f')}"
-        ),
-        recall_case=recall,
-        action_type="RECOVER",
-        target_type="RECALL",
-        target_id=recall.recall_case_id,
-        action_date=timezone.localdate(),
-        status="COMPLETED",
-        quantity=quantity,
-        notes="Recovery quantity recorded through the application.",
-    )
+        if quantity <= 0:
+            return HttpResponse(
+                "Quantity must be greater than zero.",
+                status=400,
+            )
 
-    return redirect("recall_details", recall_id=recall.recall_case_id)
+        pending = max(
+            recall.scope_quantity - recall.recovered_quantity,
+            0,
+        )
 
+        if quantity > pending:
+            return HttpResponse(
+                f"Quantity cannot exceed the pending quantity ({pending}).",
+                status=400,
+            )
+
+        recall.recovered_quantity += quantity
+
+        if recall.recovered_quantity >= recall.scope_quantity:
+            recall.status = "COMPLETED"
+            recall.completed_at = timezone.now()
+        else:
+            recall.status = "IN_PROGRESS"
+
+        recall.save()
+
+        RecallAction.objects.create(
+            recall_action_id=(
+                f"ACT-RECOVER-{timezone.now().strftime('%Y%m%d%H%M%S%f')}"
+            ),
+            recall_case=recall,
+            action_type="RECOVER",
+            target_type="RECALL",
+            target_id=recall.recall_case_id,
+            action_date=timezone.localdate(),
+            status="COMPLETED",
+            quantity=quantity,
+            notes="Recovery quantity recorded through the application.",
+        )
+
+        return redirect(
+            "recall_details",
+            recall_id=recall.recall_case_id,
+        )
+
+    return HttpResponse("Method not allowed.", status=405)
 
 # --------------------------------------------------
 # RECALL DETAILS
